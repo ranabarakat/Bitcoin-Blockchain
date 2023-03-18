@@ -1,3 +1,6 @@
+import java.security.PublicKey;
+import java.util.ArrayList;
+
 public class TxHandler {
 
     private UTXOPool utxoPool;
@@ -21,6 +24,56 @@ public class TxHandler {
      */
     public boolean isValidTx(Transaction tx) {
         // IMPLEMENT THIS
+
+        // get all inputs in tx
+        ArrayList<Transaction.Input> in = tx.getInputs();
+
+        // pool to track if utxo is claimed multiple times
+        UTXOPool UTXOTrack = new UTXOPool();
+
+        // track sum of input and output values
+        double inputSum = 0;
+        double outputSum = 0;
+
+        for (int i = 0; i< in.size(); i++){
+            // validate (1)
+            UTXO utxo = new UTXO(in.get(i).prevTxHash,in.get(i).outputIndex);
+            if(!this.utxoPool.contains(utxo)){
+                return false;
+            }
+
+            // validate (2)
+            PublicKey pubKey = this.utxoPool.getTxOutput(utxo).address;
+            byte [] rawData = tx.getRawDataToSign(i);
+            if(!Crypto.verifySignature(pubKey, rawData, in.get(i).signature)){
+                return false;
+            }
+
+            // validate (3)
+            if(UTXOTrack.contains(utxo)){
+                return false;
+            }
+            UTXOTrack.addUTXO(utxo,this.utxoPool.getTxOutput(utxo));
+
+            inputSum += utxoPool.getTxOutput(utxo).value;
+            
+        }
+        // validate (4)
+        ArrayList<Transaction.Output> out = tx.getOutputs();
+        for(int i = 0;i<out.size();i++){
+            if(out.get(i).value<0.0){
+                return false;
+            }
+            outputSum += out.get(i).value;
+        }
+
+        // validate (5)
+        if(inputSum<outputSum){
+            return false;
+        }
+
+        return true;
+        
     }
 
     /**
