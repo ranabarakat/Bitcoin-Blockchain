@@ -21,6 +21,10 @@ public class TxHandler {
         this.utxoPool = new UTXOPool(utxoPool);
     }
 
+    public UTXOPool getUTXOPool() {
+        return this.utxoPool;
+    }
+
     /**
      * @return true if:
      *         (1) all outputs claimed by {@code tx} are in the current UTXO pool,
