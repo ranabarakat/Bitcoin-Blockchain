@@ -8,7 +8,7 @@
 // You should not have all the blocks added to the block chain in memory 
 // as it would cause a memory overflow.
 // import java.lang.reflect.Array;
-import java.util.ArrayList;
+// import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +26,6 @@ public class BlockChain {
     private class Node {
         int height;
         Node parent;
-        ArrayList<Node> children = new ArrayList<Node>();
         UTXOPool utxoPool = new UTXOPool();
         Block block;
 
@@ -35,7 +34,6 @@ public class BlockChain {
             this.parent = parent;
             this.block = block;
             if (!(parent == null)) {
-                this.parent.children.add(this);
                 this.height = this.parent.height + 1;
             } else {
                 this.height = 1;
@@ -51,8 +49,16 @@ public class BlockChain {
     public BlockChain(Block genesisBlock) {
         // IMPLEMENT THIS
 
+        // genesis block is at height = 1
         this.maxHeight = 1;
+
+        // add coinbase transaction outputs to utxo pool
         UTXOPool utxoPool = new UTXOPool();
+        for (int i = 0; i < genesisBlock.getCoinbase().getOutputs().size(); i++) {
+            UTXO utxo = new UTXO(genesisBlock.getHash(), i);
+            utxoPool.addUTXO(utxo, genesisBlock.getCoinbase().getOutput(i));
+        }
+        // add genesis block to blockchain
         ByteArrayWrapper hash = new ByteArrayWrapper(genesisBlock.getHash());
         Node node = new Node(utxoPool, null, genesisBlock);
         blockchain.put(hash, node);
@@ -99,9 +105,6 @@ public class BlockChain {
      */
     public boolean addBlock(Block block) {
         // IMPLEMENT THIS
-        if (block == null) {
-            return false;
-        }
 
         Node parentNode = blockchain.get(new ByteArrayWrapper(block.getPrevBlockHash()));
 
@@ -118,6 +121,7 @@ public class BlockChain {
         // return false;
         // }
 
+        // if both arrays are unequal, at least some transactions were invalid
         if (!Arrays.equals(txHandler.handleTxs(blockTxs), blockTxs)) {
             return false;
         }
@@ -130,6 +134,10 @@ public class BlockChain {
         // add block to blockchain
         UTXOPool newPool = new UTXOPool();
         newPool = txHandler.getUTXOPool();
+        for (int i = 0; i < block.getCoinbase().getOutputs().size(); i++) {
+            UTXO utxo = new UTXO(block.getHash(), i);
+            newPool.addUTXO(utxo, block.getCoinbase().getOutput(i));
+        }
         Node newNode = new Node(newPool, parentNode, block);
         blockchain.put(new ByteArrayWrapper(block.getHash()), newNode);
 
