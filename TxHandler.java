@@ -6,7 +6,6 @@
 
 import java.security.PublicKey;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class TxHandler {
 
@@ -99,14 +98,19 @@ public class TxHandler {
     public Transaction[] handleTxs(Transaction[] possibleTxs) {
         // IMPLEMENT THIS
 
+        // stores all valid txs
         ArrayList<Transaction> validTxs = new ArrayList<>();
-        ArrayList<Transaction> temp = new ArrayList<>();
-        ArrayList<Transaction> cloneTxs = new ArrayList<>(Arrays.asList(possibleTxs));
+
+        // monitors if any tx was valid to loop again
         boolean isModified;
+
         do {
             isModified = false;
-            for (Transaction tx : cloneTxs) {
-
+            for (Transaction tx : possibleTxs) {
+                // transaction was already added, skip
+                if (validTxs.contains(tx)) {
+                    continue;
+                }
                 if (isValidTx(tx)) {
                     // UTXO is getting updated, giving another chance for prev invalid transactions
                     isModified = true;
@@ -125,20 +129,10 @@ public class TxHandler {
                         this.utxoPool.removeUTXO(utxo);
                         // tempPool.addUTXO(new UTXO(tx.getHash(), i), tx.getOutput(i));
                     }
-
-                    // collect all valid txs to be removed after iterating
-                    temp.add(tx);
                 }
-
             }
-            for (Transaction tx : temp) {
-                cloneTxs.remove(tx);
-            }
+        } while (isModified);
 
-        } while (isModified && cloneTxs.size() != 0);
-
-        Transaction[] validTransactions = validTxs.toArray(new Transaction[validTxs.size()]);
-        return validTransactions;
+        return validTxs.toArray(new Transaction[validTxs.size()]);
     }
-
 }
