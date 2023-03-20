@@ -33,10 +33,10 @@ public class BlockChain {
             this.utxoPool = pool;
             this.parent = parent;
             this.block = block;
-            if (!(parent == null)) {
-                this.height = this.parent.height + 1;
-            } else {
+            if (parent == null) {
                 this.height = 1;
+            } else {
+                this.height = this.parent.height + 1;
             }
         }
     }
@@ -116,10 +116,6 @@ public class BlockChain {
         // check that all transactions in a block are valid together
         TxHandler txHandler = new TxHandler(parentNode.utxoPool);
         Transaction[] blockTxs = block.getTransactions().toArray(new Transaction[block.getTransactions().size()]);
-        // If they are not the same size, some transactions were invalid
-        // if (txHandler.handleTxs(blockTxs).length != blockTxs.length) {
-        // return false;
-        // }
 
         // if both arrays are unequal, at least some transactions were invalid
         if (!Arrays.equals(txHandler.handleTxs(blockTxs), blockTxs)) {
